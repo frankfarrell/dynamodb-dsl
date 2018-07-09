@@ -11,40 +11,48 @@ import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
-import java.util.function.Function
 
 /**
  * Created by frankfarrell on 09/07/2018.
  */
 private val BATCH_SIZE = 25 // DynamoDB's BatchWriteItem allows a max of 25 items per batch
 
+/**
+ *
+ */
 open class DynamoBatchExecutor<T>(private val amazonDynamoDB: AmazonDynamoDB = AmazonDynamoDBClientBuilder.defaultClient(),
                                  private val scheduler: Scheduler =  Schedulers.io(),
                                  private val random: Random = Random()) {
 
-    fun delete(items: List<T>, primaryKeyFunction: Function<T, Map<String, AttributeValue>>, tableName: String) {
+    /**
+     * Deletes the [items] of type[T] that in the table [tableName]
+     * The function [primaryKeyFunction] should returns Map<String, AttributeValue>
+     * It is up to the consumer the ensure that there are no duplicates
+     */
+    fun delete(items: List<T>, primaryKeyFunction: (T)-> Map<String, AttributeValue>, tableName: String) {
 
         val writeRequests =
                 items.map { record ->
                     WriteRequest()
-                            .withDeleteRequest(DeleteRequest().withKey(primaryKeyFunction.apply(record)))
+                            .withDeleteRequest(DeleteRequest().withKey(primaryKeyFunction(record)))
                 }.map { writeRequest -> TableItemTuple(tableName, writeRequest) }
 
         batchPersist(writeRequests)
     }
 
-    fun persist(items: List<T>, mapper: DynamoMapper<T>,
+    /**
+     * Batch persist the [items] to table [tableName] where [mapper] converts objects of type [T] to Map<String, AttributeValue>
+     */
+    fun persist(items: List<T>,
+                mapper: DynamoMapper<T>,
                 tableName: String) {
-        persist(items, mapper, BATCH_SIZE, tableName)
-    }
-
-    fun persist(items: List<T>, mapper: DynamoMapper<T>,
-                batchSize: Int,
-                tableName: String) {
-        val writeList = getWriteRequests<T>(items, mapper)
+        val writeList = getWriteRequests(items, mapper)
         persist(writeList.map { TableItemTuple(tableName, it) } )
     }
 
+    /**
+     * Batch persist the [items] to table [tableName] where [items] are in the form Map<String, AttributeValue>
+     */
     fun persist(items: List<Map<String, AttributeValue>>,
                 tableName: String) {
 
@@ -55,6 +63,11 @@ open class DynamoBatchExecutor<T>(private val amazonDynamoDB: AmazonDynamoDB = A
                 .map { TableItemTuple(tableName, it) })
     }
 
+    /**
+     * Batch persist a list of TableItemTuple.
+     * This is a bit more low level, but it means you can do batch writes to multiple different tables
+     *
+     */
     fun persist(writeList: List<TableItemTuple>): List<PublishSubject<RetryablePut>> {
 
         //TODO How to accumultate finite observable into list
@@ -67,10 +80,13 @@ open class DynamoBatchExecutor<T>(private val amazonDynamoDB: AmazonDynamoDB = A
         return listOfSubjects
     }
 
+    /**
+     * Batch persist a list of items with a callback function when they are all complete
+     */
     fun persistWithCallbackOnComplete(items: List<T>,
                                       mapper: DynamoMapper<T>,
                                       tableName: String,
-                                      complete: Function<Instant, Void>) {
+                                      complete: (Instant) ->Void) {
         val writeList = getWriteRequests(items, mapper)
 
         val result = persist(writeList.map { w -> TableItemTuple(tableName, w) })
@@ -87,7 +103,7 @@ open class DynamoBatchExecutor<T>(private val amazonDynamoDB: AmazonDynamoDB = A
                     val allComplete = result.entries.all {it.value }
                     if (allComplete) {
                         //No parameter, no return value, pure side-effect
-                        complete.apply(Instant.now())
+                        complete(Instant.now())
                     }
                 }
             }
@@ -101,12 +117,19 @@ open class DynamoBatchExecutor<T>(private val amazonDynamoDB: AmazonDynamoDB = A
         })
     }
 
+    fun getWriteRequests(items: List<T>,
+                         mapper: DynamoMapper<T>): List<WriteRequest> {
+        return items
+                .map { mapper.mapToDynamoItem(it) }
+                .map { WriteRequest().withPutRequest(PutRequest().withItem(it)) }
+    }
+
     private fun batchPersist(writeList: List<TableItemTuple>): PublishSubject<RetryablePut> {
         val subject = PublishSubject.create<RetryablePut>()
 
         subject.subscribe({ retry ->
             val batchWriteItemRequest = BatchWriteItemRequest()
-            val requestItems = writeList.groupBy({it.tableName}, { it.writeRequest})
+            val requestItems = retry.items.groupBy({it.tableName}, { it.writeRequest})
 
             batchWriteItemRequest.requestItems = requestItems
             try {
@@ -135,14 +158,8 @@ open class DynamoBatchExecutor<T>(private val amazonDynamoDB: AmazonDynamoDB = A
         return subject
     }
 
-    private fun <R : T> getWriteRequests(items: List<R>,
-                                           mapper: DynamoMapper<R>): List<WriteRequest> {
-        return items
-                .map { mapper.mapToDynamoItem(it) }
-                .map { WriteRequest().withPutRequest(PutRequest().withItem(it)) }
-    }
-
-    private fun createRetry(attempt: Int, writeList: List<TableItemTuple>,
+    private fun createRetry(attempt: Int,
+                            writeList: List<TableItemTuple>,
                             subject: PublishSubject<RetryablePut>) {
         io.reactivex.Observable
                 .timer(getExponentialBackoffWithJitter(attempt), TimeUnit.MILLISECONDS, scheduler)
