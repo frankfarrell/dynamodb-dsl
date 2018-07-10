@@ -23,7 +23,7 @@ repositories {
 
 dependencyManagement {
     imports {
-        mavenBom 'com.amazonaws:aws-java-sdk-bom:1.11.82'
+        mavenBom 'com.amazonaws:aws-java-sdk-bom:1.11.363'
     }
 }
 
@@ -31,6 +31,8 @@ dependencies {
     compile (
             "org.jetbrains.kotlin:kotlin-stdlib-jre8",
             "com.amazonaws:aws-java-sdk-dynamodb",
+            "com.amazonaws:aws-java-sdk-lambda",
+            "com.amazonaws:aws-java-sdk-applicationautoscaling",
             "io.reactivex.rxjava2:rxkotlin:2.2.0"
     )
 
