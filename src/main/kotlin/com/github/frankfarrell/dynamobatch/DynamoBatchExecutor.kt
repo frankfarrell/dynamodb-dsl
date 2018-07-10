@@ -21,8 +21,11 @@ private val BATCH_SIZE = 25 // DynamoDB's BatchWriteItem allows a max of 25 item
  *
  */
 open class DynamoBatchExecutor<T>(private val amazonDynamoDB: AmazonDynamoDB = AmazonDynamoDBClientBuilder.defaultClient(),
-                                 private val scheduler: Scheduler =  Schedulers.io(),
-                                 private val random: Random = Random()) {
+                                  private val scheduler: Scheduler =  Schedulers.io(),
+                                  private val random: Random = Random(),
+                                  private val initialBackoffMs: Long = 1000,
+                                  private val attemptLimit: Long?
+                                  ) {
 
     /**
      * Deletes the [items] of type[T] that in the table [tableName]
@@ -96,23 +99,20 @@ open class DynamoBatchExecutor<T>(private val amazonDynamoDB: AmazonDynamoDB = A
 
         result.forEach({ subject, value ->
 
-            //TODO Is there a more kotlin-esque way to do this?
-            val consumer = object : Consumer<Any?> {
-                @Synchronized override fun accept( x : Any?) {
-                    result.put(subject, true)
-                    val allComplete = result.entries.all {it.value }
-                    if (allComplete) {
-                        //No parameter, no return value, pure side-effect
-                        complete(Instant.now())
-                    }
+            val consumer: (Any?) -> (Unit) = @Synchronized {
+                result.put(subject, true)
+                val allComplete = result.entries.all { it.value }
+                if (allComplete) {
+                    //No parameter, no return value, pure side-effect
+                    complete(Instant.now())
                 }
             }
 
-            subject.doOnComplete({ consumer.accept(null) })
+            subject.doOnComplete({ consumer(null) })
 
             //Case where it was finished before method returned
             if (subject.hasComplete()) {
-                consumer.accept(null)
+                consumer(null)
             }
         })
     }
@@ -161,15 +161,19 @@ open class DynamoBatchExecutor<T>(private val amazonDynamoDB: AmazonDynamoDB = A
     private fun createRetry(attempt: Int,
                             writeList: List<TableItemTuple>,
                             subject: PublishSubject<RetryablePut>) {
-        io.reactivex.Observable
-                .timer(getExponentialBackoffWithJitter(attempt), TimeUnit.MILLISECONDS, scheduler)
-                .subscribe({ subject.onNext(RetryablePut(attempt + 1, writeList)) })
+        if(attemptLimit != null && attemptLimit < attempt){
+            subject.onError(RuntimeException("Max attempt limit exceeded"))
+        }
+        else{
+            io.reactivex.Observable
+                    .timer(getExponentialBackoffWithJitter(attempt), TimeUnit.MILLISECONDS, scheduler)
+                    .subscribe({ subject.onNext(RetryablePut(attempt + 1, writeList)) })
+        }
     }
 
     // See: https://www.awsarchitectureblog.com/2015/03/backoff.html
     private fun getExponentialBackoffWithJitter(attempt: Number): Long {
-        return random
-                .longs(0, (1000 * Math.pow(2.0, attempt.toDouble())).toLong())
+        return random.longs(0, (initialBackoffMs * Math.pow(2.0, attempt.toDouble())).toLong())
                 .findFirst()
                 // Should never happen, but fatal if it does
                 .orElseThrow { RuntimeException("No random int found") }
