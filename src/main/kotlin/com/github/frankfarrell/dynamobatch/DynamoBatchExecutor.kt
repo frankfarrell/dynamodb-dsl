@@ -97,7 +97,7 @@ open class DynamoBatchExecutor<T>(private val amazonDynamoDB: AmazonDynamoDB = A
                 .toMap()
                 .toMutableMap()
 
-        result.forEach({ subject, value ->
+        result.forEach({ subject, _ ->
 
             val consumer: (Any?) -> (Unit) = @Synchronized {
                 result.put(subject, true)
