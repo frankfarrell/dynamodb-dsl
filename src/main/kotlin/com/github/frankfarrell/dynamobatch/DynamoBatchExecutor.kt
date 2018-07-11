@@ -23,7 +23,7 @@ open class DynamoBatchExecutor<T>(private val amazonDynamoDB: AmazonDynamoDB = A
                                   private val scheduler: Scheduler =  Schedulers.io(),
                                   private val random: Random = Random(),
                                   private val initialBackoffMs: Long = 1000,
-                                  private val attemptLimit: Long?
+                                  private val attemptLimit: Long? = null
                                   ) {
 
     /**
@@ -41,6 +41,7 @@ open class DynamoBatchExecutor<T>(private val amazonDynamoDB: AmazonDynamoDB = A
 
         batchPersist(writeRequests)
     }
+
 
     /**
      * Batch persist the [items] to table [tableName] where [mapper] converts objects of type [T] to Map<String, AttributeValue>

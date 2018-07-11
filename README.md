@@ -26,14 +26,30 @@ This library encapsulates does that for you using rx-kotlin.
 
 Failed writes are retried up until the attempt limit is reached using exponential backoff with jitter. 
 
-### Examples
-```
-
-
-```
-
 For refernence, [github link to issue](https://github.com/aws/aws-sdk-js/issues/1262)
 For details on exponential backoff and jitter in aws see [her](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/)
+
+### Examples
+```kotlin 
+
+data class Person(val name:String, val address: String)
+
+class PersonMapper : DynamoMapper<Person> {
+    override fun mapToDynamoItem(person: Person): Map<String, AttributeValue> {
+        return mapOf(Pair("name", AttributeValue(person.name)),
+                Pair("address", AttributeValue(person.address)))
+    }
+}
+
+val amazonDynamoDB: AmazonDynamoDB = ...
+
+val dyanmoBatch: DynamoBatchExecutor<Person> = DynamoBatchExecutor<Person> (amazonDynamoDB)
+
+dynamoBatch.persist(listOf(Person("bob", "France"), Person("jack", "Dublin")), PersonMapper(), "targetTable")
+
+
+```
+
 
 ## DynamoTableCloner
 
@@ -41,3 +57,17 @@ This library allows you to clone a dynamo table, including hash and sort key,loc
 The library also exposes functions that return the aws sdk requests that would create all of the above without applying them so that tables can be partially cloned, and also streaming event sources or autoscaling properties from one table to 
 be applied to another 
 
+### Examples
+```kotlin
+
+// You can create your own clients as necessary, the default is to use the standard client. 
+val amazonDynamoDB: AmazonDynamoDB = ...
+val awsLambdaClient: AWSLambdaClient = ...
+val autoScalingClient: AWSApplicationAutoScaling = ...
+
+val dynamoTableCloner: DynamoTableCloner = DynamoTableCloner(amazonDynamoDB, awsLambdaClient, autoScalingClient)
+
+dynamoTableCloner.cloneTable("template", "target")
+
+// You now have a new table called "target"
+```
