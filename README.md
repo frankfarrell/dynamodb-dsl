@@ -1,6 +1,22 @@
 # dynamodb-utils
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/7722315c9da948bc876aa6993d7e96bb)](https://www.codacy.com/app/frankfarrell/dynamo-batch?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=frankfarrell/dynamo-batch&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://travis-ci.org/frankfarrell/dynamodb-utils.svg?branch=master)](https://travis-ci.org/frankfarrell/dynamodb-utils)
+
 A kotlin library with utility function for dynamdb 
+
+## Get it
+
+The easiest thing is to use [jitpack](jitpack.io). Add this to your gradle file
+```
+repositories {
+        jcenter()
+        maven { url "https://jitpack.io" }
+   }
+   dependencies {
+         implementation 'com.github.frankfarrell:dynamodb-utils:0.0.1'
+   }
+```
 
 ## DynamoBatchExecutor
 
@@ -9,6 +25,12 @@ The aws sdk does not retry these requests transparently as it does for other ope
 This library encapsulates does that for you using rx-kotlin. 
 
 Failed writes are retried up until the attempt limit is reached using exponential backoff with jitter. 
+
+### Examples
+```
+
+
+```
 
 For refernence, [github link to issue](https://github.com/aws/aws-sdk-js/issues/1262)
 For details on exponential backoff and jitter in aws see [her](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/)

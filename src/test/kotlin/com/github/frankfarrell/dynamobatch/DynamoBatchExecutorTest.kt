@@ -7,9 +7,9 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.reactivex.schedulers.TestScheduler
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import junit.framework.Assert.assertEquals
+import org.junit.Before
+import org.junit.Test
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -25,7 +25,7 @@ class DynamoBatchExecutorTest {
     var testScheduler: TestScheduler = TestScheduler()
     var testRandom: Random = Random(1)
 
-    @BeforeEach
+    @Before
     fun init() {
         clearMocks(mockAmazonDynamoDB)
     }
