@@ -22,6 +22,7 @@ Base class that we issue query and scans from
 class DynamoDSL(val dynamoDB: AmazonDynamoDB = AmazonDynamoDBClientBuilder.defaultClient()) {
     fun query(tableName: String, block: QueryIteratorBuilder.() -> Unit): QueryIterator {
         val queryBuilder = QueryIteratorBuilder(dynamoDB)
+        queryBuilder.tableName = tableName
         block(queryBuilder)
         val queryIterator = queryBuilder.build()
         //Initial query
@@ -47,35 +48,6 @@ fun toAttributeValue(value: Any): AttributeValue {
     }
     //Do we need to handle NULL type?
 }
-
-val queteResult = DynamoDSL().query("mytable") {
-            hashKey("myHashKey") {
-                eq(2)
-            }
-            sortKey("mysortkey"){
-                eq (2)
-                between ( 2 AND 3)
-            }
-            filtering {
-                attribute("age") {
-                    eq(44)
-                } and attribute("weight"){
-                    eq(14)
-                } or attribute("weight"){
-                    eq(14)
-                } or {
-                    attribute(value = "age") {
-                        eq(14)
-                    } and {
-                        attribute("weight") {
-                            eq("12")
-                        } or attribute("colour"){
-                            eq("blue")
-                        }
-                    }
-                }
-            }
-        }
 
 /*
 How to stop between being called if eq already called in above?

@@ -13,6 +13,7 @@ import com.amazonaws.services.dynamodbv2.model.QueryResult
 TODO Make this generic for Scan
  */
 class QueryIterator(val dynamoDB: AmazonDynamoDB,
+                    val tableName: String,
                     val hash: HashKey,
                     val sort: SortKey?,
                     val filtering: Filter?): Iterator<Map<String, AttributeValue>>{ //Make it generic
@@ -45,6 +46,7 @@ class QueryIterator(val dynamoDB: AmazonDynamoDB,
     fun query(){
 
         val request = QueryRequest()
+        request.withTableName(tableName)
 
         if(sort == null){
             request.withKeyConditions(mapOf(Pair(hash.keyName, hash.equals.toCondition())))
@@ -58,12 +60,16 @@ class QueryIterator(val dynamoDB: AmazonDynamoDB,
             /*
             Walk over the ChainableFilterQuery building up a query string with brackets etc
              */
-
-            filtering.filterQuery.comparator.toCondition()
-            if(filtering.filterQuery.right != null){
-                val rightCondition = filtering.filterQuery.right.comparator.toCondition()
-                val rightConnector = filtering.filterQuery.right.connectionToRight
-            }
+            filtering.filterQuery.dynamoFunction
+            filtering.filterQuery.comparator?.toCondition()
+//            if(filtering.filterQuery.right != null){
+//                val rightCondition = filtering.filterQuery.right.comparator.toCondition()
+//                val rightConnector = filtering.filterQuery.right.connectionToRight
+//                val isRightNest = filtering.filterQuery.right.isRightNest
+//
+//                // Need to pull our values and add to attribute map
+//                //And if
+//            }
         }
 
         //Returns last evaulated key
@@ -77,12 +83,13 @@ class QueryIterator(val dynamoDB: AmazonDynamoDB,
 
 @DynamoDSLMarker
 class QueryIteratorBuilder(val dynamoDB: AmazonDynamoDB) {
+    var tableName: String? = null
     var hashkey: HashKey? = null
     var sortKey: SortKey? = null
     var filtering: Filter? = null
     fun build(): QueryIterator  {
         //TODO Assert hashkey and sortkey aren't null
-        return QueryIterator(dynamoDB, hashkey!!, sortKey, filtering)
+        return QueryIterator(dynamoDB, tableName!!, hashkey!!, sortKey, filtering)
     }
 
 }
