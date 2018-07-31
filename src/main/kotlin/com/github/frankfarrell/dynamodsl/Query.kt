@@ -37,7 +37,6 @@ class QueryIterator(val dynamoDB: AmazonDynamoDB,
         }
         else{
             val toReturn = results[index]
-            //could do it in a one liner but confusing
             index++
             return toReturn
         }
@@ -55,21 +54,16 @@ class QueryIterator(val dynamoDB: AmazonDynamoDB,
             request.withKeyConditions(mapOf(Pair(hash.keyName, hash.equals.toCondition()), Pair(sort.sortKeyName, sort.comparisonOperator.toCondition())))
         }
 
-        if(filtering != null){
+        if(filtering != null) {
+            val props = filtering.getFilterRequestProperties()
 
-            /*
-            Walk over the ChainableFilterQuery building up a query string with brackets etc
-             */
-
-            filtering.filterQuery
-//            if(filtering.filterQuery.right != null){
-//                val rightCondition = filtering.filterQuery.right.comparator.toCondition()
-//                val rightConnector = filtering.filterQuery.right.connectionToRight
-//                val isRightNest = filtering.filterQuery.right.isRightNest
-//
-//                // Need to pull our values and add to attribute map
-//                //And if
-//            }
+            request.withFilterExpression(props.filterExpression)
+            if(!props.expressionAttributeNames.isEmpty()){
+                request.withExpressionAttributeNames(props.expressionAttributeNames)
+            }
+            if(!props.expressionAttributeValues.isEmpty()){
+                request.withExpressionAttributeValues(props.expressionAttributeValues)
+            }
         }
 
         //Returns last evaulated key
