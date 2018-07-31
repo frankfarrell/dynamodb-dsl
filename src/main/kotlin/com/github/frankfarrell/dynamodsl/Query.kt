@@ -16,7 +16,7 @@ class QueryIterator(val dynamoDB: AmazonDynamoDB,
                     val tableName: String,
                     val hash: HashKey,
                     val sort: SortKey?,
-                    val filtering: Filter?): Iterator<Map<String, AttributeValue>>{ //Make it generic
+                    val filtering: RootFilter?): Iterator<Map<String, AttributeValue>>{ //Make it generic
 
     var lastEvaluatedKey: Map<String, AttributeValue> = emptyMap()
     private val results: MutableList<Map<String, AttributeValue>> = mutableListOf()
@@ -60,8 +60,8 @@ class QueryIterator(val dynamoDB: AmazonDynamoDB,
             /*
             Walk over the ChainableFilterQuery building up a query string with brackets etc
              */
-            filtering.filterQuery.dynamoFunction
-            filtering.filterQuery.comparator?.toCondition()
+
+            filtering.filterQuery
 //            if(filtering.filterQuery.right != null){
 //                val rightCondition = filtering.filterQuery.right.comparator.toCondition()
 //                val rightConnector = filtering.filterQuery.right.connectionToRight
@@ -86,7 +86,7 @@ class QueryIteratorBuilder(val dynamoDB: AmazonDynamoDB) {
     var tableName: String? = null
     var hashkey: HashKey? = null
     var sortKey: SortKey? = null
-    var filtering: Filter? = null
+    var filtering: RootFilter? = null
     fun build(): QueryIterator  {
         //TODO Assert hashkey and sortkey aren't null
         return QueryIterator(dynamoDB, tableName!!, hashkey!!, sortKey, filtering)

@@ -22,26 +22,23 @@ class DynamoDSLTest {
                     }
                     filtering {
                         attribute("a") {
-                            eq(44)
+                            eq(1)
                         } and attribute("b"){
-                            eq(14)
-                        } or attribute("c"){
-                            eq(14)
+                            eq(2)
                         } or {
-                            attribute("d") {
-                                eq(14)
-                            } and {
-                                attribute("e") {
-                                    eq("12")
-                                } or attribute("f"){
-                                    eq("blue")
-                                } and attributeExists("g") and attributeExists("h")
+                            attribute("c"){
+                                eq(3)
+                            } and attributeExists("d") or {
+                                attribute("e"){
+                                    eq(4)
+                                }
                             }
-                        } and attribute("j"){
-                            eq(17)
-                        }
+                        } or attributeExists("f")
+
                     }
                 }
+
+        DynamoDSL(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build()).query("c") {filtering {  }}
 
         if(queryResult.hasNext()){
             queryResult.next()
