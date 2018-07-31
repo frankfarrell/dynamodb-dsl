@@ -11,38 +11,37 @@ import org.junit.Test
 class DynamoDSLTest {
     @Test
     fun `it should build nested filter queries correctly`(){
-        val queryResult = DynamoDSL(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build())
-                .query("mytable") {
-                    hashKey("myHashKey") {
-                        eq(2)
-                    }
-                    sortKey("mysortkey"){
-                        eq (2)
-                        between ( 2 AND 3)
-                    }
-                    filtering {
-                        attribute("a") {
-                            eq(1)
-                        } and attribute("b"){
-                            eq(2)
-                        } or {
-                            attribute("c"){
-                                eq(3)
-                            } and attributeExists("d") or {
-                                attribute("e"){
-                                    eq(4)
-                                }
-                            }
-                        } or attributeExists("f")
+//        val queryResult = DynamoDSL(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build())
+//                .query("mytable") {
+//                    hashKey("myHashKey") {
+//                        eq(2)
+//                    }
+//                    sortKey("mysortkey"){
+//                        eq (2)
+//                        between ( 2 AND 3)
+//                    }
+//                    filtering {
+//                        attribute("a") {
+//                            eq(1)
+//                        } and attribute("b"){
+//                            eq(2)
+//                        } or {
+//                            attribute("c"){
+//                                eq(3)
+//                            } and attributeExists("d") or {
+//                                attribute("e"){
+//                                    eq(4)
+//                                }
+//                            }
+//                        } or attributeExists("f")
+//
+//                    }
+//                }
 
-                    }
-                }
 
-        DynamoDSL(AmazonDynamoDBClientBuilder.standard().withRegion(Regions.US_EAST_1).build()).query("c") {filtering {  }}
-
-        if(queryResult.hasNext()){
-            queryResult.next()
-        }
+        //if(queryResult.hasNext()){
+        //    queryResult.next()
+        //}
 
 
     }
