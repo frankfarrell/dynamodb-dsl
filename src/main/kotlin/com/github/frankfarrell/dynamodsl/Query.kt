@@ -24,11 +24,11 @@ class QueryIterator(val dynamoDB: AmazonDynamoDB,
     private var index: Int = 0
 
     override fun hasNext(): Boolean {
-        return lastEvaluatedKey.isNotEmpty()
+        return index < results.size || lastEvaluatedKey.isNotEmpty()
     }
 
     override fun next(): Map<String, AttributeValue> {
-        if(index >= results.size && hasNext()){
+        if(index >= results.size && lastEvaluatedKey.isNotEmpty()){
             query()
             return next()
         }
@@ -70,7 +70,13 @@ class QueryIterator(val dynamoDB: AmazonDynamoDB,
         val result: QueryResult = dynamoDB.query(request)
 
         results.addAll(result.items)
-        lastEvaluatedKey = result.lastEvaluatedKey
+        if(result.lastEvaluatedKey == null){
+            lastEvaluatedKey = emptyMap()
+        }
+        else{
+            lastEvaluatedKey = result.lastEvaluatedKey
+        }
+
     }
 
 }
