@@ -78,7 +78,7 @@ A kotlin internal DSL for Query, Scan and Update operations on Dynamo
 
 ```kotlin
 
-DynamoDSL().query("mytable") { 
+var result = DynamoDSL().query("mytable") { 
             hashKey("myHashKey") {
                 eq("abcd")
             }
@@ -88,7 +88,17 @@ DynamoDSL().query("mytable") {
             filtering {
                 attribute("age") {
                     eq(44)
-                } and attributeExists("name")
+                } and attributeExists("name") or {
+                     attribute("nested"){
+                         eq("x")
+                     } and attributeExists("movie"){
+                         eq("y")
+                     }
+                }
             }
         }
+        
+while(result.hasNext()){
+    println(result.next());
+}
 ```
