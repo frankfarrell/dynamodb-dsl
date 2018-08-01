@@ -2,6 +2,7 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/7722315c9da948bc876aa6993d7e96bb)](https://www.codacy.com/app/frankfarrell/dynamo-batch?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=frankfarrell/dynamo-batch&amp;utm_campaign=Badge_Grade)
 [![Build Status](https://travis-ci.org/frankfarrell/dynamodb-utils.svg?branch=master)](https://travis-ci.org/frankfarrell/dynamodb-utils)
+[![](https://jitpack.io/v/frankfarrell/dynamodb-utils.svg)](https://jitpack.io/#frankfarrell/dynamodb-utils)
 
 A kotlin library with utility function for dynamdb 
 
@@ -14,7 +15,7 @@ repositories {
         maven { url "https://jitpack.io" }
    }
    dependencies {
-         implementation 'com.github.frankfarrell:dynamodb-utils:0.0.1'
+         implementation 'com.github.frankfarrell:dynamodb-utils:v0.0.1'
    }
 ```
 
