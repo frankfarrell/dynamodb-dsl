@@ -23,11 +23,11 @@ repositories {
 
 DynamoDB allows writing and deleting items in batches of up to 25. However if there is a provisioned throughput exception, some or all the requests may fail. 
 The aws sdk does not retry these requests transparently as it does for other operations, but it is left up the client to retry, ideally with exponential backoff. 
-This library encapsulates does that for you using rx-kotlin. 
+This library does that for you using rx-kotlin. 
 
 Failed writes are retried up until the attempt limit is reached using exponential backoff with jitter. 
 
-For refernence, [github link to issue](https://github.com/aws/aws-sdk-js/issues/1262)
+For reference, [github link to issue](https://github.com/aws/aws-sdk-js/issues/1262)
 For details on exponential backoff and jitter in aws see [her](https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/)
 
 ### Examples
