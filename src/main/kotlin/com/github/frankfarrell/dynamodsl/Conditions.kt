@@ -10,15 +10,63 @@ interface DynamoComparator {
     fun toCondition(): Condition
 }
 
+interface SingleValueDynamoCompator: DynamoComparator {
+    val right: Any
+}
+
 interface ComparableBuilder {}
 
-class Equals(val right: Any): DynamoComparator{
+class Equals(override val right: Any): SingleValueDynamoCompator{
 
     override fun toCondition(): Condition {
         return Condition().withComparisonOperator(ComparisonOperator.EQ).withAttributeValueList(toAttributeValue(right))
     }
+}
 
-    val value = ComparisonOperator.EQ
+class NotEquals(override  val right: Any): SingleValueDynamoCompator{
+
+    override fun toCondition(): Condition {
+        return Condition().withComparisonOperator(ComparisonOperator.NE).withAttributeValueList(toAttributeValue(right))
+    }
+}
+
+class GreaterThan(override val right: Any): SingleValueDynamoCompator{
+
+    override fun toCondition(): Condition {
+        return Condition().withComparisonOperator(ComparisonOperator.GT).withAttributeValueList(toAttributeValue(right))
+    }
+
+}
+
+class LessThan(override val right: Any): SingleValueDynamoCompator{
+
+    override fun toCondition(): Condition {
+        return Condition().withComparisonOperator(ComparisonOperator.LT).withAttributeValueList(toAttributeValue(right))
+    }
+
+}
+
+class GreaterThanOrEquals(override val right: Any): SingleValueDynamoCompator{
+
+    override fun toCondition(): Condition {
+        return Condition().withComparisonOperator(ComparisonOperator.GE).withAttributeValueList(toAttributeValue(right))
+    }
+
+}
+
+class LessThanOrEquals(override val right: Any): SingleValueDynamoCompator{
+
+    override fun toCondition(): Condition {
+        return Condition().withComparisonOperator(ComparisonOperator.LE).withAttributeValueList(toAttributeValue(right))
+    }
+}
+
+class InList(val right: List<Any>): DynamoComparator{
+
+    override fun toCondition(): Condition {
+        //Is this right?
+        return Condition().withComparisonOperator(ComparisonOperator.IN).withAttributeValueList(toAttributeValue(right))
+    }
 }
 
 class Between(val left: Any, val right: Any): DynamoComparator{

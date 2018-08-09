@@ -82,18 +82,38 @@ class ConcreteFilter(val dynamoFunction: DynamoFunction,
                 filterExpression += expressionAttributeName
                 expressionAttributeNames.put(expressionAttributeName, dynamoFunction.attributeName)
 
+                fun singleValueComparator(operator: String, comparator: SingleValueDynamoCompator){
+                    val expressionAttributeValue = toExpressionAttributeValue(dynamoFunction.attributeName)
+                    filterExpression += " $operator ${expressionAttributeValue}"
+                    expressionAttributeValues.put(expressionAttributeValue, toAttributeValue(comparator.right))
+                }
+
                 when(comparator){
-                    is Equals -> {
-                        val expressionAttributeValue = toExpressionAttributeValue(dynamoFunction.attributeName)
-                        filterExpression += " = ${expressionAttributeValue}"
-                        expressionAttributeValues.put(expressionAttributeValue, toAttributeValue(comparator.right))
-                    }
+                    is Equals -> singleValueComparator("=", comparator)
+                    is NotEquals -> singleValueComparator("<>", comparator)
+                    is GreaterThan -> singleValueComparator(">", comparator)
+                    is GreaterThanOrEquals -> singleValueComparator(">=", comparator)
+                    is LessThan -> singleValueComparator("<", comparator)
+                    is LessThanOrEquals -> singleValueComparator("<=", comparator)
                     is Between -> {
                         val leftExpressionAttributeValue = toExpressionAttributeValue(dynamoFunction.attributeName + "left")
                         val rightExpressionAttributeValue = toExpressionAttributeValue(dynamoFunction.attributeName + "right")
                         filterExpression += " BETWEEN ${leftExpressionAttributeValue} AND ${rightExpressionAttributeValue} "
                         expressionAttributeValues.put(leftExpressionAttributeValue, toAttributeValue(comparator.left))
                         expressionAttributeValues.put(rightExpressionAttributeValue, toAttributeValue(comparator.right))
+                    }
+                    is InList -> {
+
+                       val listOfAttributeValues = comparator.right
+                                .map({
+                                    val expressionAttributeValue = toExpressionAttributeValue(dynamoFunction.attributeName)
+                                    expressionAttributeValues.put(expressionAttributeValue, toAttributeValue(it))
+                                    expressionAttributeValue
+                                })
+                               .joinToString()
+
+                        filterExpression += " IN (${listOfAttributeValues})"
+
                     }
                 }
 
@@ -165,6 +185,36 @@ class ConcreteFilterBuilder: FilterQueryBuilder {
 @DynamoDSLMarker
 fun ConcreteFilterBuilder.eq(value: Any){
     comparator = Equals(value)
+}
+
+@DynamoDSLMarker
+fun ConcreteFilterBuilder.noteq(value: Any){
+    comparator = NotEquals(value)
+}
+
+@DynamoDSLMarker
+fun ConcreteFilterBuilder.gt(value: Any){
+    comparator = GreaterThan(value)
+}
+
+@DynamoDSLMarker
+fun ConcreteFilterBuilder.lt(value: Any){
+    comparator = LessThan(value)
+}
+
+@DynamoDSLMarker
+fun ConcreteFilterBuilder.gteq(value: Any){
+    comparator = GreaterThanOrEquals(value)
+}
+
+@DynamoDSLMarker
+fun ConcreteFilterBuilder.lteq(value: Any){
+    comparator = LessThanOrEquals(value)
+}
+
+@DynamoDSLMarker
+fun ConcreteFilterBuilder.inList(value: List<Any>){
+    comparator = InList(value)
 }
 
 @DynamoDSLMarker
