@@ -20,6 +20,18 @@ repositories {
     jcenter()
 }
 
+jar {
+    baseName = "dynamodb-utils"
+    archivesBaseName = "dynamodb-utils"
+    manifest {
+        attributes("Implementation-Title": "Collection of dynamodb utility functions", "Implementation-Version": "0.0.2")
+    }
+    //(fat jar).
+    into("lib") {
+        from configurations.runtime
+    }
+}
+
 dependencyManagement {
     imports {
         mavenBom 'com.amazonaws:aws-java-sdk-bom:1.11.363'
