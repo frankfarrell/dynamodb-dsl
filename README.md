@@ -4,19 +4,50 @@
 [![Build Status](https://travis-ci.org/frankfarrell/dynamodb-utils.svg?branch=master)](https://travis-ci.org/frankfarrell/dynamodb-utils)
 [![](https://jitpack.io/v/frankfarrell/dynamodb-utils.svg)](https://jitpack.io/#frankfarrell/dynamodb-utils)
 
-A kotlin library with utility function for dynamdb 
+Kotlin library with utility functions for AWS DynamDB. Run queries with the DSL, clone a table and do batch writes with exponential backoff. 
 
 ## Get it
 
 The easiest thing is to use [jitpack](jitpack.io). Add this to your gradle file
-```
+
+```groovy
 repositories {
-        jcenter()
-        maven { url "https://jitpack.io" }
-   }
-   dependencies {
-         implementation 'com.github.frankfarrell:dynamodb-utils:v0.0.1'
-   }
+    jcenter()
+    maven { url "https://jitpack.io" }
+}
+dependencies {
+    implementation 'com.github.frankfarrell:dynamodb-utils:v0.0.1'
+}
+```
+
+## Dynamo DSL (Work in Progess)
+A kotlin internal DSL for Query, Scan and Update operations on Dynamo
+
+```kotlin
+
+var result = DynamoDSL().query("mytable") { 
+            hashKey("myHashKey") {
+                eq("abcd")
+            }
+            sortKey("mysortkey"){
+                between ( 2 AND 3)
+            }
+            filtering {
+                attribute("age") {
+                    eq(44)
+                } and attributeExists("name") or {
+                     attribute("nested"){
+                         eq("x")
+                     } and attributeExists("movie"){
+                         eq("y")
+                     }
+                }
+            }
+        }
+        
+while(result.hasNext()){
+    println(result.next());
+}
 ```
 
 ## DynamoBatchExecutor
@@ -48,9 +79,7 @@ val dyanmoBatch: DynamoBatchExecutor<Person> = DynamoBatchExecutor<Person> (amaz
 
 dynamoBatch.persist(listOf(Person("bob", "France"), Person("jack", "Dublin")), PersonMapper(), "targetTable")
 
-
 ```
-
 
 ## DynamoTableCloner
 
@@ -71,34 +100,4 @@ val dynamoTableCloner: DynamoTableCloner = DynamoTableCloner(amazonDynamoDB, aws
 dynamoTableCloner.cloneTable("template", "target")
 
 // You now have a new table called "target"
-```
-
-## Dynamo DSL (Work in Progess)
-A kotlin internal DSL for Query, Scan and Update operations on Dynamo
-
-```kotlin
-
-var result = DynamoDSL().query("mytable") { 
-            hashKey("myHashKey") {
-                eq("abcd")
-            }
-            sortKey("mysortkey"){
-                between ( 2 AND 3)
-            }
-            filtering {
-                attribute("age") {
-                    eq(44)
-                } and attributeExists("name") or {
-                     attribute("nested"){
-                         eq("x")
-                     } and attributeExists("movie"){
-                         eq("y")
-                     }
-                }
-            }
-        }
-        
-while(result.hasNext()){
-    println(result.next());
-}
 ```
