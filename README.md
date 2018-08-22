@@ -16,7 +16,7 @@ repositories {
     maven { url "https://jitpack.io" }
 }
 dependencies {
-    implementation 'com.github.frankfarrell:dynamodb-utils:v0.0.1'
+    implementation 'com.github.frankfarrell:dynamodb-utils:0.0.2'
 }
 ```
 
